@@ -20,7 +20,7 @@ including those analysed by an AI or sent as push notifications.
 |---|---|
 | `proctop.top[<n>,<cpu\|mem>,<text\|json>]` | The `n` (1–25, default 10) process names using the most CPU (% of the whole machine) or memory (private working set on Windows, RSS on Linux). Processes with the same name are added up. |
 | `proctop.net.conns[<n>,<text\|json>]` | The `n` process names with the most established TCP connections to other machines, with the number of distinct remote hosts and the three main ones. |
-| `proctop.net.listen[<text\|json>]` | The ports reachable from other machines: TCP sockets in LISTEN state and bound UDP sockets, with their process and addresses. Loopback addresses and the ephemeral UDP ports used by clients are excluded. The output is sorted, so an unchanged state gives an identical value. |
+| `proctop.net.listen[<text\|json>]` | The ports listening on a network interface: TCP sockets in LISTEN state and bound UDP sockets, with their process and addresses. They are reachable from other machines only if the host, router or cloud firewall allows it, which the plugin does not check. Loopback addresses and the ephemeral UDP ports used by clients are excluded. The output is sorted, so an unchanged state gives an identical value. |
 
 Text output uses aligned columns and never contains curly braces, so it can go
 straight into operational data. JSON output is meant for dependent items.
