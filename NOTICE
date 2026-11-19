@@ -1,0 +1,13 @@
+zabbix-agent2-plugin-proctop
+Copyright (c) 2026 Logiserv. Licensed under the MIT License (see LICENSE).
+
+This is an independent project. It is not affiliated with, endorsed by or
+supported by Zabbix SIA. "Zabbix" is a trademark of Zabbix SIA.
+
+The binaries include the Zabbix agent 2 plugin SDK (golang.zabbix.com/sdk,
+https://git.zabbix.com/scm/ap/plugin-support.git):
+
+  Copyright (C) 2001-2026 Zabbix SIA
+  Licensed under the MIT License.
+
+and golang.org/x/sys (BSD 3-Clause License, Copyright 2009 The Go Authors).

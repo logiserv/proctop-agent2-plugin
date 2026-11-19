@@ -1,0 +1,4 @@
+/dist/
+/zabbix-agent2-plugin-proctop
+/zabbix-agent2-plugin-proctop.exe
+*.test

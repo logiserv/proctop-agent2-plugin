@@ -1,0 +1,87 @@
+name: Release
+
+# Push a tag "vX.Y.Z" to build the binaries for every supported Zabbix agent 2
+# series, then publish them with SHA256SUMS and build provenance attestations.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # One build per agent series: the plugin must use the SDK of the
+          # agent's release branch (https://git.zabbix.com/scm/ap/plugin-support.git).
+          - series: "7.4"
+            sdk: v1.2.2-0.20261027065228-4735c97f7e8b # release/7.4
+          - series: "8.0"
+            sdk: v1.2.2-0.20261111075935-b8d3725049cd # release/8.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Pin the SDK of Zabbix ${{ matrix.series }}
+        run: |
+          go mod edit -require=golang.zabbix.com/sdk@${{ matrix.sdk }}
+          go mod tidy
+
+      - run: go test ./...
+
+      - name: Build
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          mkdir -p dist
+          for target in windows/amd64 linux/amd64 linux/arm64 linux/arm; do
+            os=${target%/*}; arch=${target#*/}
+            name="zabbix-agent2-plugin-proctop-zbx${{ matrix.series }}-${os}-${arch}"
+            [ "$os" = windows ] && name="$name.exe"
+            GOOS=$os GOARCH=$arch GOARM=7 go build -trimpath \
+              -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" \
+              -o "dist/$name" .
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.series }}
+          path: dist/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum zabbix-agent2-plugin-proctop-* | tee SHA256SUMS
+
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/zabbix-agent2-plugin-proctop-*
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "Binaries for Zabbix agent 2 7.4 and 8.0. Verify with: sha256sum -c SHA256SUMS, or gh attestation verify <file> --repo $GITHUB_REPOSITORY"

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Check go.mod / go.sum are tidy
+        shell: bash
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum || {
+            echo "::error::go.mod or go.sum is not tidy: run 'go mod tidy' and commit the result"
+            exit 1
+          }
+
+      - run: go vet ./...
+
+      - run: go test -race ./...
+
+      - name: Cross-compile every release target
+        if: runner.os == 'Linux'
+        run: |
+          for target in windows/amd64 linux/amd64 linux/arm64 linux/arm; do
+            GOOS=${target%/*} GOARCH=${target#*/} GOARM=7 CGO_ENABLED=0 go build -o /dev/null .
+          done
