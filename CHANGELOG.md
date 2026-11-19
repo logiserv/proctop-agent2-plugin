@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.1.0 — unreleased
+## v0.1.0 — 2026-11-19
 
 - `proctop.top[<n>,<cpu|mem>,<text|json>]`: top processes by CPU or memory.
 - `proctop.net.conns[<n>,<text|json>]`: top processes by established TCP connections.
